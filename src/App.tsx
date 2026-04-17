@@ -33,25 +33,21 @@ const DIMENSION_NAMES: Record<Dimension, string> = {
   strategicManeuvering: '局势掌控'
 };
 
+const INITIAL_SCORES: Record<Dimension, number> = {
+  powerAmbition: 50,
+  ruleIntegrity: 50,
+  socialResponsibility: 50,
+  emotionalDetachment: 50,
+  strategicManeuvering: 50
+};
+
 export default function App() {
   const [screen, setScreen] = useState<ScreenState>('start');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-  const [dimensionScores, setDimensionScores] = useState<Record<Dimension, number>>({
-    powerAmbition: 0,
-    ruleIntegrity: 0,
-    socialResponsibility: 0,
-    emotionalDetachment: 0,
-    strategicManeuvering: 0
-  });
+  const [dimensionScores, setDimensionScores] = useState<Record<Dimension, number>>(INITIAL_SCORES);
 
   const handleStart = () => {
-    setDimensionScores({
-      powerAmbition: 0,
-      ruleIntegrity: 0,
-      socialResponsibility: 0,
-      emotionalDetachment: 0,
-      strategicManeuvering: 0
-    });
+    setDimensionScores(INITIAL_SCORES);
     setCurrentQuestionIdx(0);
     setScreen('test');
   };
@@ -103,19 +99,24 @@ export default function App() {
     }));
   }, [dimensionScores]);
 
+  const shuffledOptions = useMemo(() => {
+    if (screen !== 'test') return [];
+    return [...questions[currentQuestionIdx].options].sort(() => Math.random() - 0.5);
+  }, [currentQuestionIdx, screen]);
+
   const handleRestart = () => {
     setScreen('start');
   };
 
   return (
-    <div className="min-h-screen bg-[#2C2C2C] flex items-center justify-center p-4">
-      <div className="relative dossier-container w-full max-w-[960px] h-full min-h-[700px] dossier-folder p-5 flex">
-        {/* Sidebar Tab */}
-        <div className="absolute right-[-40px] top-[100px] dossier-tab">
+    <div className="min-h-screen bg-[#2C2C2C] flex items-center justify-center p-0 md:p-4">
+      <div className="relative dossier-container w-full max-w-[960px] h-full rounded-none md:rounded-lg min-h-screen md:min-h-[700px] dossier-folder p-3 md:p-5 flex">
+        {/* Sidebar Tab - Hidden on Mobile */}
+        <div className="hidden md:block absolute right-[-40px] top-[100px] dossier-tab">
           案件卷宗：2017-001
         </div>
 
-        <div className="page-content paper-sheet w-full h-full p-10 md:p-16 flex flex-col relative overflow-hidden">
+        <div className="page-content paper-sheet w-full h-full p-6 sm:p-10 md:p-16 flex flex-col relative overflow-hidden">
           <AnimatePresence mode="wait">
             {screen === 'start' && (
               <motion.div
@@ -125,33 +126,33 @@ export default function App() {
                 exit={{ opacity: 0 }}
                 className="flex-grow flex flex-col"
               >
-                <div className="text-center border-b-2 border-official-red pb-5 mb-10">
-                  <h1 className="text-2xl md:text-3xl font-serif font-bold text-official-red tracking-[2px] mb-2">
+                <div className="text-center border-b-2 border-official-red pb-4 md:pb-5 mb-6 md:mb-10 mt-2 md:mt-0">
+                  <h1 className="text-xl md:text-3xl font-serif font-bold text-official-red tracking-[1px] md:tracking-[2px] mb-2 leading-tight">
                     停止仰望星空！<br />
                     来测测你离孙连城的“境界”还有多远？
                   </h1>
-                  <p className="text-xs uppercase tracking-[2px] text-text-muted">
+                  <p className="text-[10px] md:text-xs uppercase tracking-[2px] text-text-muted">
                     内卷还是躺平？让达康书记来告诉你
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center justify-center flex-grow space-y-8 max-w-xl mx-auto text-center">
-                  <div className="w-24 h-24 bg-official-red/10 rounded-full flex items-center justify-center border-2 border-official-red relative">
+                <div className="flex flex-col items-center justify-center flex-grow space-y-6 md:space-y-8 max-w-xl mx-auto text-center">
+                  <div className="w-20 h-20 md:w-24 md:h-24 bg-official-red/10 rounded-full flex items-center justify-center border-2 border-official-red relative">
                     <div className="absolute inset-2 border border-official-red rounded-full opacity-30" />
-                    <span className="text-official-red font-black text-2xl">证</span>
+                    <span className="text-official-red font-black text-xl md:text-2xl">证</span>
                   </div>
                   
-                  <div className="space-y-4">
-                    <p className="text-xl md:text-2xl font-serif font-bold text-ink-black border-b border-dashed border-[#ccc] pb-2 inline-block">
+                  <div className="space-y-3 md:space-y-4">
+                    <p className="text-lg md:text-2xl font-serif font-bold text-ink-black border-b border-dashed border-[#ccc] pb-2 inline-block">
                       公职人员人格与价值观终极审查
                     </p>
-                    <p className="text-gray-600 leading-relaxed italic">
+                    <p className="text-sm md:text-base text-gray-600 leading-relaxed italic px-2">
                       “你是那把铁面无私的冷色标尺，还是胸怀宇宙的观测者？”
                     </p>
-                    <p className="text-gray-600 leading-relaxed">
+                    <p className="text-sm md:text-base text-gray-600 leading-relaxed px-4">
                       基于汉东省 40 项极端情境博弈模型，我们将深度揭开您在权力、规则与信仰面前最真实的灵魂归属点。
                     </p>
-                    <div className="flex items-center justify-center space-x-3 text-xs text-text-muted pt-2">
+                    <div className="flex items-center justify-center space-x-3 text-[10px] md:text-xs text-text-muted pt-2 scale-90 md:scale-100">
                       <span className="flex items-center">
                         <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -195,42 +196,42 @@ export default function App() {
                 exit={{ opacity: 0 }}
                 className="flex-grow flex flex-col"
               >
-                <div className="text-center border-b-2 border-official-red pb-5 mb-10">
-                  <h1 className="text-3xl font-serif font-bold text-official-red tracking-[2px] mb-2 text-balance">
+                <div className="text-center border-b-2 border-official-red pb-4 md:pb-5 mb-6 md:mb-10">
+                  <h1 className="text-xl md:text-3xl font-serif font-bold text-official-red tracking-[2px] mb-2 text-balance leading-tight">
                     人格特质审查表 (QUESTIONNAIRE)
                   </h1>
-                  <p className="text-[10px] uppercase tracking-[2px] text-text-muted">
+                  <p className="text-[8px] md:text-[10px] uppercase tracking-[2px] text-text-muted">
                     SECTION II: PSYCHOLOGICAL BEHAVIOR ANALYSIS
                   </p>
                 </div>
 
-                <div className="flex justify-between items-center text-xs text-text-muted mb-8 border-b border-dashed border-[#ccc] pb-2 font-sans tracking-wider">
+                <div className="flex justify-between items-center text-[8px] md:text-xs text-text-muted mb-4 md:mb-8 border-b border-dashed border-[#ccc] pb-2 font-sans tracking-tight md:tracking-wider">
                   <span>受测编号：HD-H-2026-0417</span>
-                  <span>当前环节：情境抉择测试</span>
+                  <span className="hidden sm:inline">当前环节：情境抉择测试</span>
                   <span>页码：{currentQuestionIdx + 1} / {questions.length}</span>
                 </div>
 
-                <div className="flex-grow space-y-8">
-                  <div className="space-y-4">
-                    <div className="text-lg font-bold text-official-red font-sans">
+                <div className="flex-grow space-y-4 md:space-y-8 overflow-y-auto max-h-[60vh] md:max-h-none pr-1">
+                  <div className="space-y-2 md:space-y-4">
+                    <div className="text-sm md:text-lg font-bold text-official-red font-sans">
                       第 {currentQuestionIdx + 1 < 10 ? `0${currentQuestionIdx + 1}` : currentQuestionIdx + 1} 题：
                     </div>
-                    <h2 className="text-2xl font-serif font-semibold text-ink-black leading-snug">
+                    <h2 className="text-lg md:text-2xl font-serif font-semibold text-ink-black leading-snug">
                       {questions[currentQuestionIdx].text}
                     </h2>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {questions[currentQuestionIdx].options.map((option, idx) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pb-4">
+                    {shuffledOptions.map((option, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleAnswer(option)}
-                        className="form-option p-5 text-left flex items-start group relative"
+                        className="form-option p-4 md:p-5 text-left flex items-start group relative min-h-[70px] md:min-h-[auto]"
                       >
-                        <span className="w-8 h-8 border border-ink-black flex items-center justify-center shrink-0 mr-4 font-bold text-sm group-hover:bg-official-red group-hover:text-white group-hover:border-official-red transition-all">
+                        <span className="w-6 h-6 md:w-8 md:h-8 border border-ink-black flex items-center justify-center shrink-0 mr-3 md:mr-4 font-bold text-xs md:text-sm group-hover:bg-official-red group-hover:text-white group-hover:border-official-red transition-all">
                           {String.fromCharCode(65 + idx)}
                         </span>
-                        <span className="text-base text-ink-black mt-0.5 leading-relaxed">
+                        <span className="text-sm md:text-base text-ink-black mt-0.5 leading-relaxed">
                           {option.text}
                         </span>
                       </button>
@@ -238,9 +239,9 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="mt-10 flex justify-between items-end">
-                  <div className="w-64">
-                    <div className="flex justify-between text-[10px] text-text-muted mb-1 font-sans">
+                <div className="mt-6 md:mt-10 flex justify-between items-end">
+                  <div className="w-40 md:w-64">
+                    <div className="flex justify-between text-[8px] md:text-[10px] text-text-muted mb-1 font-sans">
                       <span>审查进度</span>
                       <span>{Math.round(((currentQuestionIdx + 1) / questions.length) * 100)}%</span>
                     </div>
@@ -268,21 +269,31 @@ export default function App() {
                 key="result"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex-grow flex flex-col"
+                className="flex-grow flex flex-col h-full overflow-y-auto pr-1"
               >
-                <div className="text-center border-b-2 border-official-red pb-5 mb-10">
-                  <h1 className="text-3xl font-serif font-bold text-official-red tracking-[4px] mb-2 uppercase">
+                <div className="text-center border-b-2 border-official-red pb-4 md:pb-5 mb-6 md:mb-10">
+                  <h1 className="text-xl md:text-3xl font-serif font-bold text-official-red tracking-[2px] md:tracking-[4px] mb-2 uppercase leading-tight">
                     审查结论意见书
                   </h1>
-                  <p className="text-[10px] uppercase tracking-[2px] text-text-muted">
+                  <p className="text-[8px] md:text-[10px] uppercase tracking-[2px] text-text-muted">
                     FINAL AUDIT CONCLUSION - CASE NO. 2026-X01
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[200px_1fr_250px] gap-8 flex-grow">
+                <div className="grid grid-cols-1 md:grid-cols-[200px_1fr_250px] gap-6 md:gap-8 flex-grow">
+                  {/* Result Header for Mobile */}
+                  <div className="md:hidden flex flex-col items-center mb-2">
+                    <div className="text-3xl font-serif font-black text-ink-black border-b-2 border-official-red inline-block mb-1">
+                      {resultCharacter.name}
+                    </div>
+                    <p className="text-xs text-text-muted font-sans font-bold uppercase tracking-widest">
+                      审查匹配对象
+                    </p>
+                  </div>
+
                   {/* Left Column: Photo */}
-                  <div className="space-y-6">
-                    <div className="aspect-[3/4] bg-white border border-[#D1C9BC] p-2 relative shadow-inner">
+                  <div className="space-y-4 md:space-y-6">
+                    <div className="aspect-[3/4] bg-white border border-[#D1C9BC] p-2 relative shadow-inner max-w-[200px] mx-auto md:max-w-none">
                       <img
                         src={resultCharacter.image}
                         alt={resultCharacter.name}
@@ -291,13 +302,33 @@ export default function App() {
                       />
                       <div className="absolute inset-0 border-[8px] border-white/20 pointer-events-none" />
                     </div>
-                    <div className="text-center space-y-1">
+                    <div className="text-center space-y-1 hidden md:block">
                       <div className="text-3xl font-serif font-black text-ink-black border-b-2 border-official-red inline-block mb-1">
                         {resultCharacter.name}
                       </div>
                       <p className="text-xs text-text-muted font-sans font-bold uppercase tracking-widest">
                         审查匹配对象
                       </p>
+                    </div>
+
+                    {/* Radar Chart for Mobile */}
+                    <div className="md:hidden space-y-4 py-4 border-y border-dashed border-[#ccc]">
+                      <h4 className="text-official-red font-bold text-[10px] uppercase tracking-widest text-center">人格指纹 (RADAR PROFILE)</h4>
+                      <div className="h-[200px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                            <PolarGrid stroke="#ccc" />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#555', fontSize: 8 }} />
+                            <Radar
+                              name="用户得分"
+                              dataKey="A"
+                              stroke="#A31E22"
+                              fill="#A31E22"
+                              fillOpacity={0.6}
+                            />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
 
@@ -314,15 +345,15 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <h4 className="text-official-red font-bold text-sm uppercase tracking-widest border-l-4 border-official-red pl-3">核心格调分析</h4>
+                    <div className="space-y-3 md:space-y-4">
+                      <h4 className="text-official-red font-bold text-xs md:text-sm uppercase tracking-widest border-l-4 border-official-red pl-3">核心格调分析</h4>
                       <p className="text-ink-black text-sm leading-relaxed font-serif text-justify">
                         {resultCharacter.description}
                       </p>
                     </div>
 
-                    <div className="space-y-4">
-                      <h4 className="text-official-red font-bold text-sm uppercase tracking-widest border-l-4 border-official-red pl-3">职场建议</h4>
+                    <div className="space-y-3 md:space-y-4">
+                      <h4 className="text-official-red font-bold text-xs md:text-sm uppercase tracking-widest border-l-4 border-official-red pl-3">职场建议</h4>
                       <p className="text-ink-black text-sm leading-relaxed font-serif italic">
                         {resultCharacter.suggestion}
                       </p>
@@ -332,7 +363,7 @@ export default function App() {
                       <div className="absolute -top-2.5 left-4 bg-paper-bg px-2 text-[8px] text-text-muted uppercase tracking-widest font-sans font-bold">
                         座右铭
                       </div>
-                      <span className="text-lg text-ink-black leading-relaxed">
+                      <span className="text-base md:text-lg text-ink-black leading-relaxed">
                         {resultCharacter.famousQuote}
                       </span>
                     </div>
@@ -349,7 +380,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Right Column: Radar Chart */}
+                  {/* Right Column: Radar Chart (Desktop Only) */}
                   <div className="space-y-4 border-l border-dashed border-[#ccc] pl-6 hidden md:block">
                     <h4 className="text-official-red font-bold text-[10px] uppercase tracking-widest text-center">人格指纹 (RADAR PROFILE)</h4>
                     <div className="h-[200px] w-full">
@@ -379,29 +410,29 @@ export default function App() {
                 </div>
 
                 {/* Dimension Details Section */}
-                <div className="mt-12 pt-10 border-t-2 border-official-red/30">
-                  <div className="mb-8 flex items-center">
-                    <div className="bg-official-red text-white px-3 py-1 font-bold text-xs mr-3">附录 A</div>
-                    <h3 className="text-xl font-serif font-black text-ink-black tracking-widest">📊 汉京人格：五大核心维度深度解析</h3>
+                <div className="mt-8 md:mt-12 pt-8 md:pt-10 border-t-2 border-official-red/30">
+                  <div className="mb-6 md:mb-8 flex items-center">
+                    <div className="bg-official-red text-white px-2 md:px-3 py-0.5 md:py-1 font-bold text-[10px] md:text-xs mr-3">附录 A</div>
+                    <h3 className="text-base md:text-xl font-serif font-black text-ink-black tracking-wider md:tracking-widest">📊 汉京人格：五大核心维度深度解析</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 md:gap-y-8">
                     {/* 1. Power Ambition */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between border-b border-official-red/20 pb-1">
-                        <h4 className="font-bold text-official-red font-serif text-sm">1. 权力抱负 (Power Ambition)</h4>
-                        <span className="text-[10px] text-text-muted italic">定义：你对世界的影响力边界与掌控欲</span>
+                    <div className="space-y-2 md:space-y-3">
+                      <div className="flex items-center justify-between border-b border-official-red/20 pb-1 flex-wrap gap-2">
+                        <h4 className="font-bold text-official-red font-serif text-xs md:text-sm">1. 权力抱负 (Power Ambition)</h4>
+                        <span className="text-[9px] md:text-[10px] text-text-muted italic">影响力边界与掌控欲</span>
                       </div>
-                      <div className="grid grid-cols-1 gap-3">
-                        <div className="bg-[#FAF9F6] p-3 border-l-2 border-official-red/40">
-                          <p className="text-xs font-bold text-ink-black mb-1">高分表现（进取者）</p>
-                          <p className="text-[11px] text-gray-600 leading-relaxed">
+                      <div className="grid grid-cols-1 gap-2 md:gap-3">
+                        <div className="bg-[#FAF9F6] p-2 md:p-3 border-l-2 border-official-red/40">
+                          <p className="text-[10px] md:text-xs font-bold text-ink-black mb-1">高分表现（进取者）</p>
+                          <p className="text-[10px] md:text-[11px] text-gray-600 leading-relaxed">
                             你拥有极强的人格驱动力，渴望通过职位的攀升和资源的掌控来实现人生价值。你认为只有掌握了话语权，才能真正改变环境。
                           </p>
                         </div>
-                        <div className="bg-[#FAF9F6] p-3 border-l-2 border-gray-300">
-                          <p className="text-xs font-bold text-ink-black mb-1">低分表现（淡泊者）</p>
-                          <p className="text-[11px] text-gray-600 leading-relaxed">
+                        <div className="bg-[#FAF9F6] p-2 md:p-3 border-l-2 border-gray-300">
+                          <p className="text-[10px] md:text-xs font-bold text-ink-black mb-1">低分表现（淡泊者）</p>
+                          <p className="text-[10px] md:text-[11px] text-gray-600 leading-relaxed">
                             你更在意内心的安宁或任务本身的完成，对职级带来的光环反应平淡。在极端情况下，这种倾向会转化为“无欲则刚”的洒脱。
                           </p>
                         </div>
