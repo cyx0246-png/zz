@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&family=Noto+Serif+SC:wght@200..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif SC", serif;
+  
+  --color-official-red: #A31E22;
+  --color-paper-bg: #FDFCF8;
+  --color-ink-black: #1A1A1A;
+  --color-border-gold: #C5A059;
+  --color-folder-tan: #E9E1D3;
+  --color-text-muted: #555555;
+  --color-seal-red: #D32F2F;
+}
+
+body {
+  @apply bg-[#2C2C2C] text-ink-black font-serif overflow-x-hidden;
+}
+
+.dossier-folder {
+  @apply bg-folder-tan rounded-[4px_40px_4px_4px] shadow-[20px_20px_60px_rgba(0,0,0,0.5)] border border-[#C0B7A8];
+}
+
+.paper-sheet {
+  @apply bg-paper-bg border border-[#D1C9BC] shadow-sm;
+}
+
+.official-seal {
+  @apply border-[3px] border-double border-seal-red rounded-full flex items-center justify-center text-seal-red font-bold text-[10px] text-center rotate-[-15deg] opacity-80 p-1 pointer-events-none;
+}
+
+.form-option {
+  @apply border border-[#DDD] bg-white hover:border-official-red hover:bg-[#FFF9F9] transition-all cursor-pointer;
+}
+
+.dossier-tab {
+  @apply bg-[#D1C9BC] text-[#555] border border-[#BBB] border-l-0 rounded-[0_8px_8px_0] [writing-mode:vertical-rl] px-2 py-6 text-sm;
+}
