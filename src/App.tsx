@@ -41,13 +41,24 @@ const INITIAL_SCORES: Record<Dimension, number> = {
   strategicManeuvering: 50
 };
 
+function shuffle<T>(array: T[]): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export default function App() {
   const [screen, setScreen] = useState<ScreenState>('start');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [dimensionScores, setDimensionScores] = useState<Record<Dimension, number>>(INITIAL_SCORES);
+  const [activeQuestions, setActiveQuestions] = useState(questions);
 
   const handleStart = () => {
     setDimensionScores(INITIAL_SCORES);
+    setActiveQuestions(shuffle(questions));
     setCurrentQuestionIdx(0);
     setScreen('test');
   };
@@ -59,7 +70,7 @@ export default function App() {
     });
     setDimensionScores(newScores);
 
-    if (currentQuestionIdx < questions.length - 1) {
+    if (currentQuestionIdx < activeQuestions.length - 1) {
       setCurrentQuestionIdx(currentQuestionIdx + 1);
     } else {
       setScreen('result');
@@ -75,12 +86,19 @@ export default function App() {
   };
 
   const resultCharacter = useMemo(() => {
-    const userVector = DIMENSIONS.map(d => dimensionScores[d]);
-    let maxSimilarity = -1;
+    // 方案：将所有得分进行“中心化”处理，减去基准分，只比较倾向性
+    const userVector = DIMENSIONS.map(d => dimensionScores[d] - 50);
+    
+    let maxSimilarity = -Infinity;
     let winnerId = characters[0].id;
 
-    characters.forEach(char => {
-      const charVector = DIMENSIONS.map(d => char.vector[d]);
+    // 预随机打乱角色库，防止由于相似度过于接近而总是指向第一个的问题
+    const shuffledCharacters = shuffle(characters);
+
+    shuffledCharacters.forEach(char => {
+      // 同样对角色向量进行中心化处理（以 5.5 为中性基点）
+      const charVector = DIMENSIONS.map(d => char.vector[d] - 5.5);
+      
       const similarity = calculateCosineSimilarity(userVector, charVector);
       if (similarity > maxSimilarity) {
         maxSimilarity = similarity;
@@ -101,8 +119,8 @@ export default function App() {
 
   const shuffledOptions = useMemo(() => {
     if (screen !== 'test') return [];
-    return [...questions[currentQuestionIdx].options].sort(() => Math.random() - 0.5);
-  }, [currentQuestionIdx, screen]);
+    return shuffle(activeQuestions[currentQuestionIdx].options);
+  }, [currentQuestionIdx, screen, activeQuestions]);
 
   const handleRestart = () => {
     setScreen('start');
@@ -208,7 +226,7 @@ export default function App() {
                 <div className="flex justify-between items-center text-[8px] md:text-xs text-text-muted mb-4 md:mb-8 border-b border-dashed border-[#ccc] pb-2 font-sans tracking-tight md:tracking-wider">
                   <span>受测编号：HD-H-2026-0417</span>
                   <span className="hidden sm:inline">当前环节：情境抉择测试</span>
-                  <span>页码：{currentQuestionIdx + 1} / {questions.length}</span>
+                  <span>页码：{currentQuestionIdx + 1} / {activeQuestions.length}</span>
                 </div>
 
                 <div className="flex-grow space-y-4 md:space-y-8 overflow-y-auto max-h-[60vh] md:max-h-none pr-1">
@@ -217,7 +235,7 @@ export default function App() {
                       第 {currentQuestionIdx + 1 < 10 ? `0${currentQuestionIdx + 1}` : currentQuestionIdx + 1} 题：
                     </div>
                     <h2 className="text-lg md:text-2xl font-serif font-semibold text-ink-black leading-snug">
-                      {questions[currentQuestionIdx].text}
+                      {activeQuestions[currentQuestionIdx].text}
                     </h2>
                   </div>
 
@@ -243,13 +261,13 @@ export default function App() {
                   <div className="w-40 md:w-64">
                     <div className="flex justify-between text-[8px] md:text-[10px] text-text-muted mb-1 font-sans">
                       <span>审查进度</span>
-                      <span>{Math.round(((currentQuestionIdx + 1) / questions.length) * 100)}%</span>
+                      <span>{Math.round(((currentQuestionIdx + 1) / activeQuestions.length) * 100)}%</span>
                     </div>
                     <div className="h-1 bg-gray-200 w-full rounded-full overflow-hidden">
                       <motion.div
                         className="h-full bg-official-red"
                         initial={{ width: 0 }}
-                        animate={{ width: `${((currentQuestionIdx + 1) / questions.length) * 100}%` }}
+                        animate={{ width: `${((currentQuestionIdx + 1) / activeQuestions.length) * 100}%` }}
                       />
                     </div>
                   </div>
