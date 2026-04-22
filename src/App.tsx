@@ -56,6 +56,30 @@ export default function App() {
   const [dimensionScores, setDimensionScores] = useState<Record<Dimension, number>>(INITIAL_SCORES);
   const [activeQuestions, setActiveQuestions] = useState(questions);
 
+  const questionMeans = useMemo(() => {
+    const sums: Record<Dimension, number> = {
+      powerAmbition: 0,
+      ruleIntegrity: 0,
+      socialResponsibility: 0,
+      emotionalDetachment: 0,
+      strategicManeuvering: 0
+    };
+    let totalOptions = 0;
+    questions.forEach(q => {
+      q.options.forEach(o => {
+        Object.entries(o.scores).forEach(([d, s]) => {
+          sums[d as Dimension] += s;
+        });
+        totalOptions++;
+      });
+    });
+    const means: Record<Dimension, number> = { ...sums };
+    DIMENSIONS.forEach(d => {
+      means[d] = sums[d] / (questions.length * 4); // 平均每个题目的得分偏移
+    });
+    return means;
+  }, []);
+
   const handleStart = () => {
     setDimensionScores(INITIAL_SCORES);
     setActiveQuestions(shuffle(questions));
@@ -86,28 +110,43 @@ export default function App() {
   };
 
   const resultCharacter = useMemo(() => {
-    // 方案：将所有得分进行“中心化”处理，减去基准分，只比较倾向性
-    const userVector = DIMENSIONS.map(d => dimensionScores[d] - 50);
+    if (screen !== 'result') return characters[0];
+
+    // 校准用户向量：减去 50 基准分，再减去题库本身的平均得分偏移
+    // 这样 [0,0,0,0,0] 就代表一个完全随机、无倾向的受测者
+    const userVector = DIMENSIONS.map(d => (dimensionScores[d] - 50) - (questionMeans[d] * activeQuestions.length));
     
-    let maxSimilarity = -Infinity;
-    let winnerId = characters[0].id;
+    // 计算信号强度
+    const magnitudeU = Math.sqrt(userVector.reduce((sum, v) => sum + v * v, 0));
+    
+    // 如果信号极弱（比如全选了得分均衡的选项），直接返回一个随机角色
+    if (magnitudeU < 0.1) {
+      return shuffle(characters)[0];
+    }
 
-    // 预随机打乱角色库，防止由于相似度过于接近而总是指向第一个的问题
-    const shuffledCharacters = shuffle(characters);
-
-    shuffledCharacters.forEach(char => {
-      // 同样对角色向量进行中心化处理（以 5.5 为中性基点）
+    // 计算所有角色的相似度
+    const scores = shuffle(characters).map(char => {
       const charVector = DIMENSIONS.map(d => char.vector[d] - 5.5);
-      
       const similarity = calculateCosineSimilarity(userVector, charVector);
-      if (similarity > maxSimilarity) {
-        maxSimilarity = similarity;
-        winnerId = char.id;
-      }
+      return { char, similarity };
     });
 
-    return characters.find(c => c.id === winnerId) || characters[0];
-  }, [dimensionScores, screen]);
+    // 按相似度降序排序
+    scores.sort((a, b) => b.similarity - a.similarity);
+
+    // 寻找所有相似度极其接近最高分的“头筹者”
+    const topSimilarity = scores[0].similarity;
+    const topScorers = scores.filter(s => Math.abs(s.similarity - topSimilarity) < 1e-6);
+
+    // 从头筹者中随机选一个，彻底消除数组顺序带来的固定偏见
+    return topScorers[Math.floor(Math.random() * topScorers.length)].char;
+  }, [dimensionScores, screen, activeQuestions, questionMeans]);
+
+  const resultQuote = useMemo(() => {
+    if (!resultCharacter) return '';
+    const quotes = resultCharacter.famousQuotes;
+    return quotes[Math.floor(Math.random() * quotes.length)];
+  }, [resultCharacter]);
 
   const radarData = useMemo(() => {
     return DIMENSIONS.map(d => ({
@@ -134,7 +173,7 @@ export default function App() {
           案件卷宗：2017-001
         </div>
 
-        <div className="page-content paper-sheet w-full h-full p-6 sm:p-10 md:p-16 flex flex-col relative overflow-hidden">
+        <div className="page-content paper-sheet w-full h-full p-4 sm:p-10 md:p-16 flex flex-col relative overflow-hidden">
           <AnimatePresence mode="wait">
             {screen === 'start' && (
               <motion.div
@@ -214,42 +253,42 @@ export default function App() {
                 exit={{ opacity: 0 }}
                 className="flex-grow flex flex-col"
               >
-                <div className="text-center border-b-2 border-official-red pb-4 md:pb-5 mb-6 md:mb-10">
-                  <h1 className="text-xl md:text-3xl font-serif font-bold text-official-red tracking-[2px] mb-2 text-balance leading-tight">
+                <div className="text-center border-b-2 border-official-red pb-1 md:pb-5 mb-2 md:mb-10">
+                  <h1 className="text-base md:text-3xl font-serif font-bold text-official-red tracking-[1px] md:tracking-[2px] mb-0.5 md:mb-2 text-balance leading-tight">
                     人格特质审查表 (QUESTIONNAIRE)
                   </h1>
-                  <p className="text-[8px] md:text-[10px] uppercase tracking-[2px] text-text-muted">
+                  <p className="text-[6px] md:text-[10px] uppercase tracking-[2px] text-text-muted">
                     SECTION II: PSYCHOLOGICAL BEHAVIOR ANALYSIS
                   </p>
                 </div>
 
-                <div className="flex justify-between items-center text-[8px] md:text-xs text-text-muted mb-4 md:mb-8 border-b border-dashed border-[#ccc] pb-2 font-sans tracking-tight md:tracking-wider">
+                <div className="flex justify-between items-center text-[6px] md:text-xs text-text-muted mb-2 md:mb-8 border-b border-dashed border-[#ccc] pb-1 font-sans tracking-tight md:tracking-wider">
                   <span>受测编号：HD-H-2026-0417</span>
                   <span className="hidden sm:inline">当前环节：情境抉择测试</span>
                   <span>页码：{currentQuestionIdx + 1} / {activeQuestions.length}</span>
                 </div>
 
-                <div className="flex-grow space-y-4 md:space-y-8 overflow-y-auto max-h-[60vh] md:max-h-none pr-1">
-                  <div className="space-y-2 md:space-y-4">
-                    <div className="text-sm md:text-lg font-bold text-official-red font-sans">
+                <div className="flex-grow space-y-2 md:space-y-8 overflow-y-auto max-h-[70vh] md:max-h-none pr-1">
+                  <div className="space-y-0.5 md:space-y-4">
+                    <div className="text-[10px] md:text-lg font-bold text-official-red font-sans">
                       第 {currentQuestionIdx + 1 < 10 ? `0${currentQuestionIdx + 1}` : currentQuestionIdx + 1} 题：
                     </div>
-                    <h2 className="text-lg md:text-2xl font-serif font-semibold text-ink-black leading-snug">
+                    <h2 className="text-sm md:text-2xl font-serif font-semibold text-ink-black leading-snug">
                       {activeQuestions[currentQuestionIdx].text}
                     </h2>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 md:gap-4 pb-2">
                     {shuffledOptions.map((option, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleAnswer(option)}
-                        className="form-option p-4 md:p-5 text-left flex items-start group relative min-h-[70px] md:min-h-[auto]"
+                        className="form-option p-2 md:p-5 text-left flex items-start group relative min-h-[50px] md:min-h-[auto]"
                       >
-                        <span className="w-6 h-6 md:w-8 md:h-8 border border-ink-black flex items-center justify-center shrink-0 mr-3 md:mr-4 font-bold text-xs md:text-sm group-hover:bg-official-red group-hover:text-white group-hover:border-official-red transition-all">
+                        <span className="w-4 h-4 md:w-8 md:h-8 border border-ink-black flex items-center justify-center shrink-0 mr-2 md:mr-4 font-bold text-[8px] md:text-sm group-hover:bg-official-red group-hover:text-white group-hover:border-official-red transition-all">
                           {String.fromCharCode(65 + idx)}
                         </span>
-                        <span className="text-sm md:text-base text-ink-black mt-0.5 leading-relaxed">
+                        <span className="text-[11px] md:text-base text-ink-black mt-0.5 leading-tight">
                           {option.text}
                         </span>
                       </button>
@@ -257,7 +296,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="mt-6 md:mt-10 flex justify-between items-end">
+                <div className="mt-2 md:mt-10 flex justify-between items-end">
                   <div className="w-40 md:w-64">
                     <div className="flex justify-between text-[8px] md:text-[10px] text-text-muted mb-1 font-sans">
                       <span>审查进度</span>
@@ -298,59 +337,17 @@ export default function App() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[200px_1fr_250px] gap-6 md:gap-8 flex-grow">
-                  {/* Result Header for Mobile */}
-                  <div className="md:hidden flex flex-col items-center mb-2">
-                    <div className="text-3xl font-serif font-black text-ink-black border-b-2 border-official-red inline-block mb-1">
-                      {resultCharacter.name}
-                    </div>
-                    <p className="text-xs text-text-muted font-sans font-bold uppercase tracking-widest">
-                      审查匹配对象
-                    </p>
+                <div className="flex flex-col items-center mb-6 border-b border-official-red pb-4">
+                  <div className="text-4xl font-serif font-black text-ink-black border-b-4 border-official-red inline-block mb-2">
+                    {resultCharacter.name}
                   </div>
+                  <p className="text-sm text-text-muted font-sans font-bold uppercase tracking-widest">
+                    审查匹配对象 (IDENTIFIED PROFILE)
+                  </p>
+                </div>
 
-                  {/* Left Column: Photo */}
-                  <div className="space-y-4 md:space-y-6">
-                    <div className="aspect-[3/4] bg-white border border-[#D1C9BC] p-2 relative shadow-inner max-w-[200px] mx-auto md:max-w-none">
-                      <img
-                        src={resultCharacter.image}
-                        alt={resultCharacter.name}
-                        className="w-full h-full object-cover grayscale brightness-90 contrast-125"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 border-[8px] border-white/20 pointer-events-none" />
-                    </div>
-                    <div className="text-center space-y-1 hidden md:block">
-                      <div className="text-3xl font-serif font-black text-ink-black border-b-2 border-official-red inline-block mb-1">
-                        {resultCharacter.name}
-                      </div>
-                      <p className="text-xs text-text-muted font-sans font-bold uppercase tracking-widest">
-                        审查匹配对象
-                      </p>
-                    </div>
-
-                    {/* Radar Chart for Mobile */}
-                    <div className="md:hidden space-y-4 py-4 border-y border-dashed border-[#ccc]">
-                      <h4 className="text-official-red font-bold text-[10px] uppercase tracking-widest text-center">人格指纹 (RADAR PROFILE)</h4>
-                      <div className="h-[200px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                            <PolarGrid stroke="#ccc" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#555', fontSize: 8 }} />
-                            <Radar
-                              name="用户得分"
-                              dataKey="A"
-                              stroke="#A31E22"
-                              fill="#A31E22"
-                              fillOpacity={0.6}
-                            />
-                          </RadarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Middle Column: Description & Quotes */}
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8 flex-grow">
+                  {/* Left Column: Description & Quotes */}
                   <div className="space-y-6 py-2">
                     <div className="grid grid-cols-2 gap-4 border-b border-dashed border-[#ccc] pb-4 font-sans text-xs">
                       <div>
@@ -361,6 +358,15 @@ export default function App() {
                         <span className="text-text-muted font-bold block mb-1 uppercase tracking-tighter">评估等级</span>
                         <span className="text-official-red font-bold text-sm tracking-widest">AA++ / 特级审查</span>
                       </div>
+                    </div>
+
+                    <div className="p-4 bg-[#F5F2EA] border border-[#D1C9BC] font-serif italic relative">
+                      <div className="absolute -top-2.5 left-4 bg-paper-bg px-2 text-[8px] text-text-muted uppercase tracking-widest font-sans font-bold">
+                        座右铭
+                      </div>
+                      <span className="text-base md:text-lg text-ink-black leading-relaxed whitespace-pre-line">
+                        {resultQuote}
+                      </span>
                     </div>
 
                     <div className="space-y-3 md:space-y-4">
@@ -377,35 +383,17 @@ export default function App() {
                       </p>
                     </div>
 
-                    <div className="p-4 bg-[#F5F2EA] border border-[#D1C9BC] font-serif italic relative">
-                      <div className="absolute -top-2.5 left-4 bg-paper-bg px-2 text-[8px] text-text-muted uppercase tracking-widest font-sans font-bold">
-                        座右铭
-                      </div>
-                      <span className="text-base md:text-lg text-ink-black leading-relaxed">
-                        {resultCharacter.famousQuote}
-                      </span>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h4 className="text-official-red font-bold text-[10px] uppercase tracking-widest">能力鉴定 (CHARACTER TAGS)</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {resultCharacter.traits.map((trait, i) => (
-                          <span key={i} className="px-2 py-0.5 bg-white border border-ink-black/20 font-serif text-xs italic">
-                            #{trait}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    {/* Removal of character tags from original middle column as they were moved to radar column */}
                   </div>
 
-                  {/* Right Column: Radar Chart (Desktop Only) */}
-                  <div className="space-y-4 border-l border-dashed border-[#ccc] pl-6 hidden md:block">
+                  {/* Right Column: Radar Chart & Tags */}
+                  <div className="space-y-6 md:border-l border-dashed border-[#ccc] md:pl-8">
                     <h4 className="text-official-red font-bold text-[10px] uppercase tracking-widest text-center">人格指纹 (RADAR PROFILE)</h4>
-                    <div className="h-[200px] w-full">
+                    <div className="h-[250px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                        <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
                           <PolarGrid stroke="#ccc" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#555', fontSize: 8 }} />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#555', fontSize: 10 }} />
                           <Radar
                             name="用户得分"
                             dataKey="A"
@@ -416,13 +404,27 @@ export default function App() {
                         </RadarChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="space-y-2">
-                      {DIMENSIONS.map(d => (
-                        <div key={d} className="flex justify-between items-center text-[10px] border-b border-[#eee] pb-1">
-                          <span className="text-text-muted">{DIMENSION_NAMES[d]}</span>
-                          <span className="font-bold">{dimensionScores[d]}</span>
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        {DIMENSIONS.map(d => (
+                          <div key={d} className="flex justify-between items-center text-[10px] border-b border-[#eee] pb-1">
+                            <span className="text-text-muted">{DIMENSION_NAMES[d]}</span>
+                            <span className="font-bold text-ink-black">{dimensionScores[d]}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-4 border-t border-dashed border-[#ccc]">
+                        <h4 className="text-official-red font-bold text-[10px] uppercase tracking-widest mb-3">能力鉴定 (CHARACTER TAGS)</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {resultCharacter.traits.map((trait, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-white border border-ink-black/20 font-serif text-[10px] italic">
+                              #{trait}
+                            </span>
+                          ))}
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 </div>

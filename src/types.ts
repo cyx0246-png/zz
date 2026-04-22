@@ -11,7 +11,7 @@ export interface Character {
   title: string;
   description: string;
   suggestion: string;
-  famousQuote: string;
+  famousQuotes: string[];
   image: string;
   traits: string[];
   vector: Record<Dimension, number>;
