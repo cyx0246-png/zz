@@ -78,7 +78,7 @@ export const questions: Question[] = [
       { text: '坚决拒绝，甚至因此与老领导断绝往来。', scores: { ruleIntegrity: 3, emotionalDetachment: 3 } },
       { text: '非常纠结，试图在合规范围内给老领导一个体面的交代。', scores: { emotionalDetachment: -2, strategicManeuvering: 1 } },
       { text: '只要不犯大错，一定会投桃报李，认为做人不能忘本。', scores: { emotionalDetachment: -3 } },
-      { text: '向上级领导汇报此事，让更高层的人来做这个得罪人的决定。（注：典型利己策略）', scores: { strategicManeuvering: 2 } }
+      { text: '向上级领导汇报此事，让更高层的人来做这个得罪人的决定。', scores: { strategicManeuvering: 2 } }
     ]
   },
   {
