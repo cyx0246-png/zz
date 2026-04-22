@@ -185,8 +185,7 @@ export default function App() {
               >
                 <div className="text-center border-b-2 border-official-red pb-4 md:pb-5 mb-6 md:mb-10 mt-2 md:mt-0">
                   <h1 className="text-xl md:text-3xl font-serif font-bold text-official-red tracking-[1px] md:tracking-[2px] mb-2 leading-tight">
-                    停止仰望星空！<br />
-                    来测测你离孙连城的“境界”还有多远？
+                    汉东省公职人员人格审查系统
                   </h1>
                   <p className="text-[10px] md:text-xs uppercase tracking-[2px] text-text-muted">
                     内卷还是躺平？让达康书记来告诉你
@@ -201,7 +200,7 @@ export default function App() {
                   
                   <div className="space-y-3 md:space-y-4">
                     <p className="text-lg md:text-2xl font-serif font-bold text-ink-black border-b border-dashed border-[#ccc] pb-2 inline-block">
-                      公职人员人格与价值观终极审查
+                      汉东省公职人员人格与价值观终极审查
                     </p>
                     <p className="text-sm md:text-base text-gray-600 leading-relaxed italic px-2">
                       “你是那把铁面无私的冷色标尺，还是胸怀宇宙的观测者？”
