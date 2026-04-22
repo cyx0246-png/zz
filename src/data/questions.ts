@@ -275,7 +275,7 @@ export const questions: Question[] = [
     id: 28,
     text: '如果你退休后可以写一本自传，你最希望的主题是：',
     options: [
-      { text: '《我的奋斗：从草根到巅峰的博弈之路》。', scores: { powerAmbition: 3 } },
+      { text: '《阶梯：关于渴望、尊严与代价的博弈往事》。', scores: { powerAmbition: 3 } },
       { text: '《守望者：我的一生从未违背程序与良知》。', scores: { ruleIntegrity: 3 } },
       { text: '《桥梁：我在各方势力间寻找平衡的艺术》。', scores: { strategicManeuvering: 3 } },
       { text: '《星空下：一段与宇宙/爱好的精神对话》。', scores: { powerAmbition: -3 } }
@@ -395,10 +395,10 @@ export const questions: Question[] = [
     id: 40,
     text: '最后，如果你的人生是一场棋局，你认为自己最像哪颗棋子？',
     options: [
-      { text: '将/帅：坐镇中军，运筹帷幄，掌控全局。', scores: { strategicManeuvering: 3 } },
-      { text: '卒：勇往直前，绝不回头，哪怕最后过河被牺牲。', scores: { ruleIntegrity: 3, socialResponsibility: 1 } },
       { text: '炮：隔山打牛，擅长借力打力，寻找奇袭机会。', scores: { strategicManeuvering: 2, powerAmbition: 1 } },
-      { text: '棋盘本身：冷眼看局中人厮杀，我自岿然不动。', scores: { powerAmbition: -3, socialResponsibility: -1 } }
+      { text: '将/帅：坐镇中军，运筹帷幄，掌控全局。', scores: { strategicManeuvering: 3 } },
+      { text: '棋盘本身：冷眼看局中人厮杀，我自岿然不动。', scores: { powerAmbition: -3, socialResponsibility: -1 } },
+      { text: '卒：勇往直前，绝不回头，哪怕最后过河被牺牲。', scores: { ruleIntegrity: 3, socialResponsibility: 1 } }
     ]
   }
 ];

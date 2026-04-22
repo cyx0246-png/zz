@@ -4,18 +4,18 @@ export const characters: Character[] = [
   {
     id: 'hou-liangping',
     name: '侯亮平',
-    title: '汉东省检察院反贪局局长',
+    title: '汉东省检察院反贪局局局长',
     description: '充满正义感的业务骨干，偶尔有点小清高。你追求真理与法纪的完美契合，在复杂的博弈中，你是那颗永不偏航的棋子。你的底色是正直，是那种为了信仰不顾一切的锐气。',
     suggestion: '正义的路上不仅需要利剑，更需要洞察人心的温度。',
     famousQuotes: ['“你大把大把捞黑钱的时候，怎么没想过自己是农民的儿子？”'],
     image: 'https://picsum.photos/seed/hou/400/600',
     traits: ['正直', '睿智', '业务骨干'],
     vector: {
-      powerAmbition: 7,
-      ruleIntegrity: 9,
-      socialResponsibility: 8,
-      emotionalDetachment: 7,
-      strategicManeuvering: 6
+      powerAmbition: 1.0,
+      ruleIntegrity: 10.0,
+      socialResponsibility: 10.0,
+      emotionalDetachment: 1.0,
+      strategicManeuvering: 10.0
     }
   },
   {
@@ -31,11 +31,11 @@ export const characters: Character[] = [
     image: 'https://picsum.photos/seed/li/400/600',
     traits: ['极致实干', '目标感强', '孤独行者'],
     vector: {
-      powerAmbition: 10,
-      ruleIntegrity: 7,
+      powerAmbition: 9,
+      ruleIntegrity: 8,
       socialResponsibility: 9,
-      emotionalDetachment: 10,
-      strategicManeuvering: 5
+      emotionalDetachment: 8,
+      strategicManeuvering: 4
     }
   },
   {
@@ -53,8 +53,8 @@ export const characters: Character[] = [
     vector: {
       powerAmbition: 8,
       ruleIntegrity: 4,
-      socialResponsibility: 5,
-      emotionalDetachment: 6,
+      socialResponsibility: 4,
+      emotionalDetachment: 5,
       strategicManeuvering: 10
     }
   },
@@ -71,11 +71,11 @@ export const characters: Character[] = [
     image: 'https://picsum.photos/seed/qi/400/600',
     traits: ['孤傲野心', '执着反击', '胜天半子'],
     vector: {
-      powerAmbition: 10,
-      ruleIntegrity: 2,
-      socialResponsibility: 3,
-      emotionalDetachment: 4,
-      strategicManeuvering: 8
+      powerAmbition: 8.0,
+      ruleIntegrity: 3.0,
+      socialResponsibility: 3.0,
+      emotionalDetachment: 3.0,
+      strategicManeuvering: 8.0
     }
   },
   {
@@ -91,11 +91,11 @@ export const characters: Character[] = [
     image: 'https://picsum.photos/seed/chen/400/600',
     traits: ['理想主义', '群众哨兵', '永恒火种'],
     vector: {
-      powerAmbition: 1,
-      ruleIntegrity: 9,
-      socialResponsibility: 10,
-      emotionalDetachment: 4,
-      strategicManeuvering: 4
+      powerAmbition: 3.0,
+      ruleIntegrity: 8.5,
+      socialResponsibility: 8.5,
+      emotionalDetachment: 3.0,
+      strategicManeuvering: 3.0
     }
   },
   {
@@ -111,9 +111,9 @@ export const characters: Character[] = [
     image: 'https://picsum.photos/seed/lu/400/600',
     traits: ['程序正义', '刚直不阿', '纯粹守望'],
     vector: {
-      powerAmbition: 5,
+      powerAmbition: 4,
       ruleIntegrity: 10,
-      socialResponsibility: 7,
+      socialResponsibility: 6,
       emotionalDetachment: 9,
       strategicManeuvering: 4
     }
@@ -131,11 +131,11 @@ export const characters: Character[] = [
     image: 'https://picsum.photos/seed/sun/400/600',
     traits: ['宇宙看客', '佛系超脱', '自我放逐'],
     vector: {
-      powerAmbition: 1,
-      ruleIntegrity: 8,
-      socialResponsibility: 1,
-      emotionalDetachment: 9,
-      strategicManeuvering: 3
+      powerAmbition: 4.0,
+      ruleIntegrity: 7.0,
+      socialResponsibility: 3.5,
+      emotionalDetachment: 8.0,
+      strategicManeuvering: 4.0
     }
   },
   {
@@ -151,7 +151,7 @@ export const characters: Character[] = [
       powerAmbition: 3,
       ruleIntegrity: 9,
       socialResponsibility: 10,
-      emotionalDetachment: 8,
+      emotionalDetachment: 7,
       strategicManeuvering: 5
     }
   },
@@ -165,11 +165,11 @@ export const characters: Character[] = [
     image: 'https://picsum.photos/seed/sha/400/600',
     traits: ['降维打击', '绝对权威', '最高裁决'],
     vector: {
-      powerAmbition: 8,
-      ruleIntegrity: 9,
-      socialResponsibility: 8,
-      emotionalDetachment: 8,
-      strategicManeuvering: 10
+      powerAmbition: 9.0,
+      ruleIntegrity: 9.0,
+      socialResponsibility: 9.0,
+      emotionalDetachment: 8.0,
+      strategicManeuvering: 9.0
     }
   },
   {
@@ -184,9 +184,9 @@ export const characters: Character[] = [
     vector: {
       powerAmbition: 4,
       ruleIntegrity: 10,
-      socialResponsibility: 6,
+      socialResponsibility: 5,
       emotionalDetachment: 9,
-      strategicManeuvering: 8
+      strategicManeuvering: 7
     }
   },
   {

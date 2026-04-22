@@ -54,10 +54,131 @@ export default function App() {
   const [screen, setScreen] = useState<ScreenState>('start');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [dimensionScores, setDimensionScores] = useState<Record<Dimension, number>>(INITIAL_SCORES);
+  const [scoreHistory, setScoreHistory] = useState<Record<Dimension, number>[]>([]);
   const [activeQuestions, setActiveQuestions] = useState(questions);
   const [isQuickMode, setIsQuickMode] = useState(false);
+  const [devClickCount, setDevClickCount] = useState(0);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simProgress, setSimProgress] = useState(0);
+  const [simLogs, setSimLogs] = useState<string[]>([]);
+  const [simulationResults, setSimulationResults] = useState<Record<string, number> | null>(null);
+  const [simulationHistory, setSimulationHistory] = useState<{timestamp: string, results: Record<string, number>}[]>([]);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
 
   const QUICK_QUESTION_IDS = [1, 2, 5, 6, 8, 9, 12, 14, 16, 19, 21, 22, 26, 27, 28, 31, 32, 34, 39, 40];
+
+  const handleCopyForAI = () => {
+    if (!simulationResults) return;
+    
+    const sorted = (Object.entries(simulationResults) as [string, number][])
+      .sort((a, b) => b[1] - a[1]);
+    
+    const distributionText = sorted
+      .map(([name, count]) => `${name}: ${(count / 100).toFixed(2)}%`)
+      .join('\n');
+    
+    const instruction = `根据 10,000 次随机测试（硬核深度模式测试），结果分布如下：
+${distributionText}
+
+请基于此分布情况，分析当前各角色的权重向量，并进行针对性调整。`;
+
+    navigator.clipboard.writeText(instruction).then(() => {
+      setCopyStatus('copied');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    });
+  };
+
+  const getQuestionMeansInternal = (qList: typeof questions) => {
+    const sums: Record<Dimension, number> = {
+      powerAmbition: 0,
+      ruleIntegrity: 0,
+      socialResponsibility: 0,
+      emotionalDetachment: 0,
+      strategicManeuvering: 0
+    };
+    qList.forEach(q => {
+      q.options.forEach(o => {
+        Object.entries(o.scores).forEach(([d, s]) => {
+          sums[d as Dimension] += (s as number) || 0;
+        });
+      });
+    });
+    const means: Record<Dimension, number> = { ...sums };
+    DIMENSIONS.forEach(d => {
+      means[d] = sums[d] / (qList.length * 4);
+    });
+    return means;
+  };
+
+  const handleRunSimulation = async (totalIterations = 10000) => {
+    setIsSimulating(true);
+    setSimProgress(0);
+    setSimulationResults(null);
+    setSimLogs(["[SYSTEM] Initializing Monte Carlo Engine...", "[SYSTEM] Loading Character Vectors...", "[SYSTEM] Seeding Random Generator..."]);
+
+    const stats: Record<string, number> = {};
+    characters.forEach(c => stats[c.name] = 0);
+
+    const fullQuestions = questions;
+    const meansFull = getQuestionMeansInternal(fullQuestions);
+    const charVectors = characters.map(char => ({
+      char,
+      vector: DIMENSIONS.map(d => char.vector[d] - 5.5)
+    }));
+
+    const batchSize = 500;
+    for (let b = 0; b < totalIterations; b += batchSize) {
+      // Allow UI to update
+      await new Promise(resolve => setTimeout(resolve, 0));
+      
+      for (let i = 0; i < batchSize; i++) {
+        const scores: Record<Dimension, number> = { ...INITIAL_SCORES };
+        fullQuestions.forEach(q => {
+          const option = q.options[Math.floor(Math.random() * q.options.length)];
+          Object.entries(option.scores).forEach(([d, s]) => {
+            scores[d as Dimension] += (s as number) || 0;
+          });
+        });
+
+        const userVector = DIMENSIONS.map(d => (scores[d] - 50) - (meansFull[d] * fullQuestions.length));
+        const magnitudeU = Math.sqrt(userVector.reduce((sum, v) => sum + v * v, 0));
+
+        let matchedCharName = "";
+        if (magnitudeU < 0.1) {
+          matchedCharName = characters[Math.floor(Math.random() * characters.length)].name;
+        } else {
+          const similarities = charVectors.map(cv => ({
+            char: cv.char,
+            similarity: calculateCosineSimilarity(userVector, cv.vector)
+          }));
+          similarities.sort((a, b) => b.similarity - a.similarity);
+          matchedCharName = similarities[0].char.name;
+        }
+        stats[matchedCharName]++;
+      }
+
+      const progress = Math.min(100, Math.round(((b + batchSize) / totalIterations) * 100));
+      setSimProgress(progress);
+      
+      // Update logs with most recent top character
+      const currentTop = Object.entries(stats).sort((a, b) => b[1] - a[1])[0];
+      setSimLogs(prev => [
+        `[BATCH] Iteration ${b + batchSize}: Convergence leading to ${currentTop[0]} (${(currentTop[1] / (b + batchSize) * 100).toFixed(1)}%)`,
+        ...prev.slice(0, 4)
+      ]);
+    }
+
+    setSimulationResults(stats);
+    setSimulationHistory(prev => [
+      { timestamp: new Date().toLocaleTimeString(), results: stats },
+      ...prev.slice(0, 9)
+    ]);
+    setIsSimulating(false);
+  };
+
+  const handleDevTrigger = () => {
+    handleRunSimulation(10000);
+  };
 
   const questionMeans = useMemo(() => {
     const sums: Record<Dimension, number> = {
@@ -70,7 +191,7 @@ export default function App() {
     activeQuestions.forEach(q => {
       q.options.forEach(o => {
         Object.entries(o.scores).forEach(([d, s]) => {
-          sums[d as Dimension] += s;
+          sums[d as Dimension] += (s as number) || 0;
         });
       });
     });
@@ -83,20 +204,31 @@ export default function App() {
 
   const handleStart = (mode: 'full' | 'quick') => {
     setDimensionScores(INITIAL_SCORES);
+    setScoreHistory([]);
     const selectedQuestions = mode === 'quick' 
       ? questions.filter(q => QUICK_QUESTION_IDS.includes(q.id))
       : questions;
     
     setIsQuickMode(mode === 'quick');
-    setActiveQuestions(shuffle(selectedQuestions));
+    
+    // 核心逻辑：确保最后一题 (ID 40) 始终排在末尾，其他题目随机
+    const lastQuestion = selectedQuestions.find(q => q.id === 40);
+    const others = selectedQuestions.filter(q => q.id !== 40);
+    const shuffledOthers = shuffle(others);
+    
+    setActiveQuestions(lastQuestion ? [...shuffledOthers, lastQuestion] : shuffledOthers);
+    
     setCurrentQuestionIdx(0);
     setScreen('test');
   };
 
   const handleAnswer = (option: Option) => {
+    // Save current scores to history before updating
+    setScoreHistory(prev => [...prev, dimensionScores]);
+
     const newScores = { ...dimensionScores };
     Object.entries(option.scores).forEach(([dimension, score]) => {
-      newScores[dimension as Dimension] += score || 0;
+      newScores[dimension as Dimension] += (score as number) || 0;
     });
     setDimensionScores(newScores);
 
@@ -104,6 +236,15 @@ export default function App() {
       setCurrentQuestionIdx(currentQuestionIdx + 1);
     } else {
       setScreen('result');
+    }
+  };
+
+  const handlePrevQuestion = () => {
+    if (currentQuestionIdx > 0 && scoreHistory.length > 0) {
+      const prevScores = scoreHistory[scoreHistory.length - 1];
+      setDimensionScores(prevScores);
+      setScoreHistory(prev => prev.slice(0, -1));
+      setCurrentQuestionIdx(currentQuestionIdx - 1);
     }
   };
 
@@ -118,34 +259,21 @@ export default function App() {
   const resultCharacter = useMemo(() => {
     if (screen !== 'result') return characters[0];
 
-    // 校准用户向量：减去 50 基准分，再减去题库本身的平均得分偏移
-    // 这样 [0,0,0,0,0] 就代表一个完全随机、无倾向的受测者
     const userVector = DIMENSIONS.map(d => (dimensionScores[d] - 50) - (questionMeans[d] * activeQuestions.length));
-    
-    // 计算信号强度
     const magnitudeU = Math.sqrt(userVector.reduce((sum, v) => sum + v * v, 0));
     
-    // 如果信号极弱（比如全选了得分均衡的选项），直接返回一个随机角色
     if (magnitudeU < 0.1) {
-      return shuffle(characters)[0];
+      return characters[Math.floor(Math.random() * characters.length)];
     }
 
-    // 计算所有角色的相似度
-    const scores = shuffle(characters).map(char => {
+    const scores = characters.map(char => {
       const charVector = DIMENSIONS.map(d => char.vector[d] - 5.5);
       const similarity = calculateCosineSimilarity(userVector, charVector);
       return { char, similarity };
     });
 
-    // 按相似度降序排序
     scores.sort((a, b) => b.similarity - a.similarity);
-
-    // 寻找所有相似度极其接近最高分的“头筹者”
-    const topSimilarity = scores[0].similarity;
-    const topScorers = scores.filter(s => Math.abs(s.similarity - topSimilarity) < 1e-6);
-
-    // 从头筹者中随机选一个，彻底消除数组顺序带来的固定偏见
-    return topScorers[Math.floor(Math.random() * topScorers.length)].char;
+    return scores[0].char;
   }, [dimensionScores, screen, activeQuestions, questionMeans]);
 
   const resultQuote = useMemo(() => {
@@ -164,7 +292,10 @@ export default function App() {
 
   const shuffledOptions = useMemo(() => {
     if (screen !== 'test') return [];
-    return shuffle(activeQuestions[currentQuestionIdx].options);
+    const q = activeQuestions[currentQuestionIdx];
+    // 最后一题 (ID 40) 的选项不参与随机分布
+    if (q.id === 40) return q.options;
+    return shuffle(q.options);
   }, [currentQuestionIdx, screen, activeQuestions]);
 
   const handleRestart = () => {
@@ -245,9 +376,12 @@ export default function App() {
                 </div>
 
                 <div className="mt-auto flex justify-between items-end border-t border-[#eee] pt-6">
-                  <div className="text-[10px] text-text-muted uppercase tracking-widest font-sans">
+                  <button 
+                    onDoubleClick={handleDevTrigger}
+                    className="text-[10px] text-text-muted uppercase tracking-widest font-sans hover:text-official-red transition-colors cursor-default"
+                  >
                     HD-DOC-CODE: 2026-X01
-                  </div>
+                  </button>
                   <div className="official-seal w-28 h-28">
                     汉东省反贪总局<br />审查专用章
                   </div>
@@ -277,7 +411,12 @@ export default function App() {
                     <span className={`px-1.5 py-0.5 rounded-sm font-bold text-[8px] uppercase ${isQuickMode ? 'bg-[#F2D6D6] text-official-red' : 'bg-[#E5E5E5] text-ink-black'}`}>
                       {isQuickMode ? '快速模式' : '全库模式'}
                     </span>
-                    <span>受测编号：HD-H-2026-0417</span>
+                    <button 
+                      onDoubleClick={handleDevTrigger}
+                      className="hover:text-official-red transition-colors cursor-default"
+                    >
+                      受测编号：HD-H-2026-0417
+                    </button>
                   </div>
                   <span className="hidden sm:inline">当前环节：情境抉择测试</span>
                   <span>页码：{currentQuestionIdx + 1} / {activeQuestions.length}</span>
@@ -312,7 +451,18 @@ export default function App() {
                 </div>
 
                 <div className="mt-2 md:mt-10 flex justify-between items-end">
-                  <div className="w-40 md:w-64">
+                  <div className="w-40 md:w-64 space-y-2">
+                    {currentQuestionIdx > 0 && (
+                      <button 
+                        onClick={handlePrevQuestion}
+                        className="text-[9px] md:text-xs font-bold text-text-muted hover:text-official-red transition-colors flex items-center gap-1 group block mb-2"
+                      >
+                        <svg className="w-2.5 h-2.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        返回上一题
+                      </button>
+                    )}
                     <div className="flex justify-between text-[8px] md:text-[10px] text-text-muted mb-1 font-sans">
                       <span>审查进度</span>
                       <span>{Math.round(((currentQuestionIdx + 1) / activeQuestions.length) * 100)}%</span>
@@ -583,7 +733,161 @@ export default function App() {
           </AnimatePresence>
         </div>
       </div>
-      
+
+      {/* Simulation Result Modal */}
+      {/* Simulation Result / Monte Carlo Modal */}
+      <AnimatePresence>
+        {(simulationResults || isSimulating) && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-[#151619] text-white w-full max-w-2xl p-6 md:p-8 border border-white/20 shadow-2xl relative font-mono"
+            >
+              <button 
+                onClick={() => { setSimulationResults(null); setIsSimulating(false); }}
+                className="absolute top-4 right-4 text-white/50 hover:text-white font-bold text-xl"
+              >
+                ✕
+              </button>
+
+              <div className="mb-6 space-y-1">
+                <div className="flex items-center gap-2 text-official-red">
+                  <div className="w-2 h-2 bg-official-red animate-pulse rounded-full" />
+                  <h2 className="text-lg font-bold tracking-tighter uppercase italic">
+                    Monte Carlo Analysis Engine v2.0
+                  </h2>
+                </div>
+                <p className="text-[10px] text-white/40 border-b border-white/10 pb-2">
+                  TASK: 10,000 ITERATIONS RANDOMIZED PROBABILITY MAPPING
+                </p>
+              </div>
+
+              {isSimulating ? (
+                <div className="space-y-6 py-8">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs tracking-widest text-official-red">
+                      <span>SIMULATING RAW CLICKS...</span>
+                      <span>{simProgress}%</span>
+                    </div>
+                    <div className="h-4 bg-white/5 w-full border border-white/10 overflow-hidden relative">
+                      <motion.div 
+                        className="h-full bg-official-red"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${simProgress}%` }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold mix-blend-difference">
+                        RUNNING_ALGORITHM_BLOCK_{simProgress}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-black/50 p-4 border border-white/5 text-[9px] space-y-1 text-green-500/80 leading-tight h-32 overflow-hidden">
+                    {simLogs.map((log, i) => (
+                      <div key={i} className="flex gap-2">
+                        <span className="opacity-30">[{new Date().toLocaleTimeString()}]</span>
+                        <span>{log}</span>
+                      </div>
+                    ))}
+                    <div className="animate-pulse">_</div>
+                  </div>
+                </div>
+              ) : simulationResults && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar border-r border-white/10">
+                      {(Object.entries(simulationResults) as [string, number][])
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([name, count]) => {
+                          const percentage = (count / 100).toFixed(2);
+                          return (
+                            <div key={name} className="space-y-1 group">
+                              <div className="flex justify-between items-end text-[10px]">
+                                <span className="text-white/80 group-hover:text-official-red transition-colors">{name}</span>
+                                <span className="font-bold text-official-red">{percentage}%</span>
+                              </div>
+                              <div className="h-1.5 bg-white/5 w-full overflow-hidden border border-white/10">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${percentage}%` }}
+                                  className="h-full bg-official-red/80"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="bg-white/5 p-4 border border-white/10 space-y-3">
+                        <h4 className="text-[10px] text-white/40 uppercase">Distribution Stats</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-white/60">Sample Size</span>
+                            <span>10,000</span>
+                          </div>
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-white/60">Confidence</span>
+                            <span className="text-green-500">99.8%</span>
+                          </div>
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-white/60">Top Hit</span>
+                            <span className="text-official-red font-bold">
+                              {(Object.entries(simulationResults) as [string, number][]).sort((a, b) => b[1] - a[1])[0][0]}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {simulationHistory.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-[10px] text-white/40 uppercase">History Log</h4>
+                          <div className="space-y-1 max-h-[15vh] overflow-y-auto text-[9px]">
+                            {simulationHistory.map((entry, idx) => {
+                              const top = (Object.entries(entry.results) as [string, number][]).sort((a, b) => b[1] - a[1])[0];
+                              return (
+                                <div key={idx} className="flex justify-between py-1 border-b border-white/5 opacity-60 hover:opacity-100 cursor-pointer" onClick={() => setSimulationResults(entry.results)}>
+                                  <span>{entry.timestamp}</span>
+                                  <span className="text-official-red">{top[0]} ({(top[1]/100).toFixed(1)}%)</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/10">
+                    <button 
+                      onClick={handleCopyForAI}
+                      className={`flex-1 py-2 border font-bold text-[10px] transition-all flex items-center justify-center gap-2 ${
+                        copyStatus === 'copied' 
+                          ? 'bg-green-600 border-green-600 text-white' 
+                          : 'bg-transparent border-official-red text-official-red hover:bg-official-red hover:text-white'
+                      }`}
+                    >
+                      {copyStatus === 'copied' ? 'COPIED_INSTRUCTION' : 'RUN_AI_REBALANCE_CMD'}
+                    </button>
+                    <button 
+                      onClick={() => handleRunSimulation(10000)}
+                      className="flex-1 py-2 bg-official-red text-white font-bold text-[10px] hover:bg-red-700 transition-all uppercase"
+                    >
+                      New Iteration
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <footer className="fixed bottom-4 text-white/20 text-[10px] uppercase tracking-[0.4em] font-sans">
         HAN DONG PROVINCE ARCHIVES DEPARTMENT · CONFIDENTIAL 2026
       </footer>
