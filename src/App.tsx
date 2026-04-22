@@ -55,6 +55,9 @@ export default function App() {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [dimensionScores, setDimensionScores] = useState<Record<Dimension, number>>(INITIAL_SCORES);
   const [activeQuestions, setActiveQuestions] = useState(questions);
+  const [isQuickMode, setIsQuickMode] = useState(false);
+
+  const QUICK_QUESTION_IDS = [1, 2, 5, 6, 8, 9, 12, 14, 16, 19, 21, 22, 26, 27, 28, 31, 32, 34, 39, 40];
 
   const questionMeans = useMemo(() => {
     const sums: Record<Dimension, number> = {
@@ -64,25 +67,28 @@ export default function App() {
       emotionalDetachment: 0,
       strategicManeuvering: 0
     };
-    let totalOptions = 0;
-    questions.forEach(q => {
+    activeQuestions.forEach(q => {
       q.options.forEach(o => {
         Object.entries(o.scores).forEach(([d, s]) => {
           sums[d as Dimension] += s;
         });
-        totalOptions++;
       });
     });
     const means: Record<Dimension, number> = { ...sums };
     DIMENSIONS.forEach(d => {
-      means[d] = sums[d] / (questions.length * 4); // 平均每个题目的得分偏移
+      means[d] = sums[d] / (activeQuestions.length * 4); // 平均每个题目的得分偏移
     });
     return means;
-  }, []);
+  }, [activeQuestions]);
 
-  const handleStart = () => {
+  const handleStart = (mode: 'full' | 'quick') => {
     setDimensionScores(INITIAL_SCORES);
-    setActiveQuestions(shuffle(questions));
+    const selectedQuestions = mode === 'quick' 
+      ? questions.filter(q => QUICK_QUESTION_IDS.includes(q.id))
+      : questions;
+    
+    setIsQuickMode(mode === 'quick');
+    setActiveQuestions(shuffle(selectedQuestions));
     setCurrentQuestionIdx(0);
     setScreen('test');
   };
@@ -213,24 +219,29 @@ export default function App() {
                         <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        40 道深度题目
-                      </span>
-                      <span className="w-1 h-1 bg-text-muted/30 rounded-full" />
-                      <span className="flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        预计用时 8-10 分钟
+                        官方全库 / 深度模式
                       </span>
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleStart}
-                    className="w-full max-w-xs py-4 bg-official-red text-white font-bold tracking-[4px] rounded shadow-lg hover:bg-official-red/90 transition-all active:scale-95"
-                  >
-                    开始审查
-                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-4">
+                    <button
+                      onClick={() => handleStart('quick')}
+                      className="group relative flex flex-col items-center justify-center p-4 bg-white border-2 border-official-red/30 rounded shadow-md hover:border-official-red transition-all active:scale-95 text-center overflow-hidden"
+                    >
+                      <div className="absolute top-0 right-0 bg-official-red text-white text-[8px] font-bold px-2 py-0.5 tracking-tighter uppercase">Recommended</div>
+                      <span className="text-official-red font-bold tracking-[2px] mb-1">快速审查 (20题)</span>
+                      <span className="text-[10px] text-text-muted">核心议题判定 • 预计5分钟</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => handleStart('full')}
+                      className="flex flex-col items-center justify-center p-4 bg-white border-2 border-[#ccc] rounded shadow-sm hover:border-official-red/50 transition-all active:scale-95 text-center"
+                    >
+                      <span className="text-ink-black font-bold tracking-[2px] mb-1 opacity-80">深度审查 (40题)</span>
+                      <span className="text-[10px] text-text-muted">全维度极限博弈 • 预计10分钟</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-auto flex justify-between items-end border-t border-[#eee] pt-6">
@@ -262,7 +273,12 @@ export default function App() {
                 </div>
 
                 <div className="flex justify-between items-center text-[6px] md:text-xs text-text-muted mb-2 md:mb-8 border-b border-dashed border-[#ccc] pb-1 font-sans tracking-tight md:tracking-wider">
-                  <span>受测编号：HD-H-2026-0417</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-1.5 py-0.5 rounded-sm font-bold text-[8px] uppercase ${isQuickMode ? 'bg-[#F2D6D6] text-official-red' : 'bg-[#E5E5E5] text-ink-black'}`}>
+                      {isQuickMode ? '快速模式' : '全库模式'}
+                    </span>
+                    <span>受测编号：HD-H-2026-0417</span>
+                  </div>
                   <span className="hidden sm:inline">当前环节：情境抉择测试</span>
                   <span>页码：{currentQuestionIdx + 1} / {activeQuestions.length}</span>
                 </div>
