@@ -78,17 +78,17 @@ export const questions: Question[] = [
       { text: '坚决拒绝，甚至因此与老领导断绝往来。', scores: { ruleIntegrity: 3, emotionalDetachment: 3 } },
       { text: '非常纠结，试图在合规范围内给老领导一个体面的交代。', scores: { emotionalDetachment: -2, strategicManeuvering: 1 } },
       { text: '只要不犯大错，一定会投桃报李，认为做人不能忘本。', scores: { emotionalDetachment: -3 } },
-      { text: '向上级领导汇报此事，让更高层的人来做这个得罪人的决定。', scores: { strategicManeuvering: 2 } }
+      { text: '向上级领导汇报此事，让更高层的人来做这个得罪人的决定。（注：典型利己策略）', scores: { strategicManeuvering: 2 } }
     ]
   },
   {
     id: 9,
-    text: '关于“职业成就”，你内心深处最渴望达到的境界是：',
+    text: '你认为一个人职业成功的最高标准是什么？',
     options: [
-      { text: '获得足以重塑局面的影响力，通过资源的高效整合，打下属于自己的时代印记。', scores: { powerAmbition: 3 } },
-      { text: '深耕具体业务，通过实实在在的痛点解决，看到自身劳动转化为社会福祉。', scores: { socialResponsibility: 3 } },
-      { text: '在职业上升过程中保持品格的绝对自洽，无论环境如何变迁始终恪守程序边界。', scores: { ruleIntegrity: 3 } },
-      { text: '实现财务与精神的双重独立，在达到职业顶峰或退场后，能从容回归个人生活的本真。', scores: { powerAmbition: -3 } }
+      { text: '掌握话语权，改变一个地区的现状或行业规则。', scores: { powerAmbition: 3 } },
+      { text: '在其位谋其政，问心无愧地解决了一批现实难题。', scores: { socialResponsibility: 3 } },
+      { text: '即使身处高位，也从未违背过法律和良知。', scores: { ruleIntegrity: 3 } },
+      { text: '平安降落，能够全身心地享受个人的精神世界。', scores: { powerAmbition: -3 } }
     ]
   },
   {
@@ -153,12 +153,12 @@ export const questions: Question[] = [
   },
   {
     id: 16,
-    text: '在一次涉及部门生存的关键会议上，由于顶层设计存在明显偏差，可能导致一线利益受损，你会：',
+    text: '在一次关键会议上，大领导提出了一个明显错误且会损害基层利益的方案，你会：',
     options: [
-      { text: '坚持原则导向，即使面对高层压力也需明确指出方案缺陷，确保底层逻辑的闭环。', scores: { socialResponsibility: 2, ruleIntegrity: 1 } },
-      { text: '采取弹性策略，在维护管理层权威的前提下，于执行阶段寻求局部修正与利益平衡。', scores: { strategicManeuvering: 2, socialResponsibility: 1 } },
-      { text: '展现高度一致的执行力，快速寻找方案的合理化支点，作为最坚定的推动者辅助决策落地。', scores: { powerAmbition: 2, socialResponsibility: -2 } },
-      { text: '恪守“依令行事”的边界，将决策权与后果交由上级，利用现有程序的复杂性进行消极防御。', scores: { powerAmbition: -1, strategicManeuvering: 1 } }
+      { text: '当场指出错误，哪怕让领导下不来台，也要保护基层利益。', scores: { socialResponsibility: 2, ruleIntegrity: 1 } },
+      { text: '沉默不语，事后在执行过程中通过技术手段进行微调或抵消。', scores: { strategicManeuvering: 2, socialResponsibility: 1 } },
+      { text: '率先表态支持领导，并帮领导寻找该方案的合理化逻辑。', scores: { powerAmbition: 2, socialResponsibility: -2 } },
+      { text: '在本子上认真记录，但心里已经想好了如何以“客观条件不足”为由拖延执行。', scores: { powerAmbition: -1, strategicManeuvering: 1 } }
     ]
   },
   {
@@ -273,12 +273,12 @@ export const questions: Question[] = [
   },
   {
     id: 28,
-    text: '如果你退休后可以总结自己的职业生涯遗产，你最倾向于哪种叙述基调？',
+    text: '如果你退休后可以写一本自传，你最希望的主题是：',
     options: [
-      { text: '“不懈进取”：通过卓越的战略决断，在极度匮乏的资源环境中完成了层级重构与自我证明。', scores: { powerAmbition: 3 } },
-      { text: '“系统守望”：作为制度的坚定执行者，在漫长的职业生涯中完整捍卫了程序的闭环与公平。', scores: { ruleIntegrity: 3 } },
-      { text: '“动态平衡”：在复杂的利益网与多方博弈中，以协调艺术实现了系统稳定与各方利益的公约数。', scores: { strategicManeuvering: 3 } },
-      { text: '“独立自保有余”：职业身份仅是一层底色，我更引以为傲的是在组织之外仍保有极其完整且深邃的个人精神世界。', scores: { powerAmbition: -3 } }
+      { text: '《我的奋斗：从草根到巅峰的博弈之路》。', scores: { powerAmbition: 3 } },
+      { text: '《守望者：我的一生从未违背程序与良知》。', scores: { ruleIntegrity: 3 } },
+      { text: '《桥梁：我在各方势力间寻找平衡的艺术》。', scores: { strategicManeuvering: 3 } },
+      { text: '《星空下：一段与宇宙/爱好的精神对话》。', scores: { powerAmbition: -3 } }
     ]
   },
   {
